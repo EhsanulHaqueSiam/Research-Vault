@@ -26,7 +26,7 @@ import { ToastContainer } from '@/components/feedback/ActionToast'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SidebarView } from '@/components/layout/Sidebar'
-import { ArrowLeft, History, CheckSquare, FileText, FolderOpen, Settings, LayoutGrid, Search, BarChart3, Keyboard, Files, BookOpen } from 'lucide-react'
+import { ArrowLeft, History, CheckSquare, FileText, Settings, LayoutGrid, Search, BarChart3, Files, BookOpen } from 'lucide-react'
 import type { Project } from '@/features/projects'
 import type { Note } from '@/features/notes/types/note.types'
 
@@ -236,7 +236,7 @@ function AppContent() {
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
     const [helpOpen, setHelpOpen] = useState(false)
-    const [selectedFile, setSelectedFile] = useState<string | null>(null)
+    const [_selectedFile, setSelectedFile] = useState<string | null>(null)
 
     // Sync sidebar selection with active view
     useEffect(() => {
@@ -303,8 +303,6 @@ function AppContent() {
 
     // Keyboard shortcuts
     const handleCommandPalette = () => setCommandPaletteOpen(true)
-    const handleSettings = () => setSettingsOpen(true)
-    const handleHelp = () => setHelpOpen(true)
 
     // Render logic based on view state
     const renderMainContent = () => {

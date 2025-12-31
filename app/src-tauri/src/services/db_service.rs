@@ -244,33 +244,89 @@ impl DbService {
         conn.execute("DELETE FROM notes WHERE id = ?1", params![id])?;
         Ok(())
     }
+    /// Initialize the database
+    pub fn init(conn: &Connection) -> AppResult<()> {
+        // Create projects table
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS projects (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                path TEXT NOT NULL UNIQUE,
+                description TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at INTEGER NOT NULL,
+                last_modified_at INTEGER NOT NULL,
+                tags TEXT
+            )",
+            [],
+        )?;
+
+        // Create tasks table
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS tasks (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                parent_id TEXT,
+                title TEXT NOT NULL,
+                description TEXT,
+                status TEXT NOT NULL,
+                priority TEXT NOT NULL,
+                due_date INTEGER,
+                completed_at INTEGER,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                \"order\" INTEGER NOT NULL DEFAULT 0,
+                tags TEXT,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+            )",
+            [],
+        )?;
+
+        // Create notes table
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS notes (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                is_pinned BOOLEAN DEFAULT 0,
+                tags TEXT,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+            )",
+            [],
+        )?;
+
+        Ok(())
+    }
 
     // ==========================================
     // Helper Functions
     // ==========================================
 
     fn row_to_project(row: &Row) -> Project {
-        let tags_str: Option<String> = row.get(7).ok();
-        let tags = tags_str.and_then(|s| serde_json::from_str(&s).ok());
+        let tags_str: Option<String> = row.get("tags").unwrap_or(None);
+        let tags = tags_str.and_then(|t| serde_json::from_str(&t).ok());
 
         Project {
-            id: row.get(0).unwrap_or_default(),
-            name: row.get(1).unwrap_or_default(),
-            path: row.get(2).unwrap_or_default(),
-            description: row.get(3).ok(),
-            status: row.get(4).unwrap_or_default(),
-            created_at: row.get(5).unwrap_or_default(),
-            last_modified_at: row.get(6).unwrap_or_default(),
+            id: row.get("id").unwrap_or_default(),
+            name: row.get("name").unwrap_or_default(),
+            path: row.get("path").unwrap_or_default(),
+            description: row.get("description").unwrap_or(None),
+            status: row.get("status").unwrap_or_else(|_| "active".to_string()),
+            created_at: row.get("created_at").unwrap_or_default(),
+            last_modified_at: row.get("last_modified_at").unwrap_or_default(),
             tags,
         }
     }
 
     fn row_to_task(row: &Row) -> Task {
-        let tags_str: Option<String> = row.get(12).ok();
-        let tags = tags_str.and_then(|s| serde_json::from_str(&s).ok());
+        let tags_str: Option<String> = row.get("tags").unwrap_or(None);
+        let tags = tags_str.and_then(|t| serde_json::from_str(&t).ok());
 
         Task {
-            id: row.get(0).unwrap_or_default(),
+            id: row.get("id").unwrap_or_default(),
             project_id: row.get(1).unwrap_or_default(),
             parent_id: row.get(2).ok(),
             title: row.get(3).unwrap_or_default(),

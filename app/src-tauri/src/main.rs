@@ -31,6 +31,26 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .manage(AppState::new())
+        .setup(|app| {
+            use tauri::Manager;
+            
+            let app_handle = app.handle();
+            let app_data_dir = app.path().app_data_dir().unwrap();
+            
+            if !app_data_dir.exists() {
+                std::fs::create_dir_all(&app_data_dir).unwrap();
+            }
+            
+            let db_path = app_data_dir.join("research.db");
+            let state = app_handle.state::<AppState>();
+            
+            if let Err(e) = state.init_db(db_path.to_str().unwrap()) {
+                eprintln!("Failed to initialize database: {}", e);
+                return Err(e.into());
+            }
+            
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             // Project commands
             create_project,

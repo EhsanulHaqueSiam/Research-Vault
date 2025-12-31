@@ -38,6 +38,10 @@ pub enum AppError {
     /// JSON serialization error
     #[error("Serialization error: {0}")]
     Serialization(String),
+
+    /// System error
+    #[error("System error: {0}")]
+    System(String),
 }
 
 /// Result type alias for application operations
