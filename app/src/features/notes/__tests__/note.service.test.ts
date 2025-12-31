@@ -166,7 +166,7 @@ describe('Note Search Logic', () => {
 
 describe('Note Pinning Logic', () => {
     it('should toggle pin status', () => {
-        let note = { id: '1', isPinned: false }
+        const note = { id: '1', isPinned: false }
 
         // Toggle to pinned
         note.isPinned = !note.isPinned

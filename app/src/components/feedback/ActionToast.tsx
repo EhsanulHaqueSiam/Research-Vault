@@ -107,7 +107,7 @@ export function ActionToast({
 // Toast Container & Hook
 // ============================================
 
-export interface Toast extends Omit<ActionToastProps, 'onDismiss'> { }
+export type Toast = Omit<ActionToastProps, 'onDismiss'>
 
 // Internal state type (not exported)
 // interface ToastState {

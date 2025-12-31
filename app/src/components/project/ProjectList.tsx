@@ -61,7 +61,7 @@ export function ProjectList({
     const filteredProjects = useMemo(() => {
         if (!projects) return []
 
-        let result = projects.filter(project => {
+        const result = projects.filter(project => {
             // Search filter
             const matchesSearch = searchQuery.length === 0 ||
                 project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

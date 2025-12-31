@@ -41,7 +41,7 @@ export class ProjectRepository extends BaseRepository<Project> {
             try {
                 const project = await invoke<Project>('get_project', { id })
                 return this.normalizeProject(project)
-            } catch (error) {
+            } catch {
                 // Not found
                 return null
             }

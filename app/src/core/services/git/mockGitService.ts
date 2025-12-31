@@ -249,7 +249,7 @@ export class MockAutoCommitService {
     private config: AutoCommitConfig = { ...DEFAULT_AUTO_COMMIT_CONFIG }
     private isActive: boolean = false
     private pendingCount: number = 0
-    private listeners: Map<string, Set<Function>> = new Map()
+    private listeners: Map<string, Set<(data: unknown) => void>> = new Map()
     private git: MockGitService
 
     constructor(git: MockGitService, _history: MockHistoryService) {
@@ -311,18 +311,18 @@ export class MockAutoCommitService {
         return snapshot
     }
 
-    on(event: string, callback: Function): void {
+    on(event: string, callback: (data: unknown) => void): void {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, new Set())
         }
         this.listeners.get(event)!.add(callback)
     }
 
-    off(event: string, callback: Function): void {
+    off(event: string, callback: (data: unknown) => void): void {
         this.listeners.get(event)?.delete(callback)
     }
 
-    private emit(event: string, data: any): void {
+    private emit(event: string, data: unknown): void {
         this.listeners.get(event)?.forEach(cb => cb(data))
     }
 }

@@ -258,8 +258,9 @@ function AppContent() {
         return localStorage.getItem('research-tutorial-completed') !== 'true'
     })
 
-    // Auto-commit hook - only active when a project is open
-    const autoCommit = selectedProject ? useAutoCommit(selectedProject.path) : null
+    // Auto-commit hook - always called (hooks must be unconditional)
+    // Uses project path when available, empty string otherwise
+    const autoCommit = useAutoCommit(selectedProject?.path ?? '')
 
     // Start auto-commit watching when project opens
     useEffect(() => {
@@ -271,7 +272,7 @@ function AppContent() {
                 autoCommit.stop()
             }
         }
-    }, [selectedProject?.id])
+    }, [selectedProject?.id, autoCommit])
 
     const handleOpenProject = (project: Project) => {
         setSelectedProject(project)

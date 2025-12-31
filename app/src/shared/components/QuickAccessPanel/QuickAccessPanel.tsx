@@ -56,7 +56,11 @@ function QuickAccessItemRow({ item, onSelect, showFavoriteToggle = true }: Quick
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
-                        favorite ? removeFavorite(item.id) : addFavorite(item)
+                        if (favorite) {
+                            removeFavorite(item.id)
+                        } else {
+                            addFavorite(item)
+                        }
                     }}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
                 >

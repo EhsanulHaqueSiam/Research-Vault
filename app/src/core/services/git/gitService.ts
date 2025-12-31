@@ -269,7 +269,7 @@ export class GitService {
 
             for (const [filepath, head, workdir, stage] of statusMatrix) {
                 let status: FileStatus | null = null
-                let staged = stage !== head
+                const staged = stage !== head
 
                 // Determine status
                 if (head === 0 && workdir === 2) {

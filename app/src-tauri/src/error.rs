@@ -23,7 +23,8 @@ pub enum AppError {
     #[error("Invalid input: {0}")]
     InvalidInput(String),
 
-    /// Permission denied
+    /// Permission denied (reserved for future permission handling)
+    #[allow(dead_code)]
     #[error("Permission denied: {0}")]
     PermissionDenied(String),
 

@@ -36,9 +36,8 @@ impl AppState {
         Ok(())
     }
 
-
-
-    /// Get database connection
+    /// Get database connection (will be used by future Tauri commands)
+    #[allow(dead_code)]
     pub fn get_db(&self) -> std::sync::MutexGuard<'_, Option<Connection>> {
         self.db.lock().unwrap()
     }

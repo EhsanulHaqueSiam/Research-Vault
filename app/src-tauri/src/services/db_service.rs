@@ -1,3 +1,10 @@
+//! Database service for SQLite operations
+//! 
+//! Note: Task and Note operations are scaffolded for future Tauri command integration.
+//! They will be wired up when the frontend requires backend persistence for these entities.
+
+#![allow(dead_code)]
+
 use rusqlite::{params, Connection, Row};
 use crate::error::AppResult;
 use crate::models::{Project, Task, Note};

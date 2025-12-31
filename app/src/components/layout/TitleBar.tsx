@@ -17,7 +17,7 @@ export function TitleBar({ title = 'Research Manager' }: TitleBarProps) {
         try {
             const { getCurrentWindow } = await import('@tauri-apps/api/window')
             await getCurrentWindow().minimize()
-        } catch (e) {
+        } catch {
             console.log('Not running in Tauri')
         }
     }
@@ -31,7 +31,7 @@ export function TitleBar({ title = 'Research Manager' }: TitleBarProps) {
             } else {
                 await window.maximize()
             }
-        } catch (e) {
+        } catch {
             console.log('Not running in Tauri')
         }
     }
@@ -40,7 +40,7 @@ export function TitleBar({ title = 'Research Manager' }: TitleBarProps) {
         try {
             const { getCurrentWindow } = await import('@tauri-apps/api/window')
             await getCurrentWindow().close()
-        } catch (e) {
+        } catch {
             console.log('Not running in Tauri')
         }
     }
