@@ -24,9 +24,14 @@ import { useProjectNotes } from '@/features/notes/hooks/useNotes'
 import { Button } from '@/components/ui'
 import { ToastContainer } from '@/components/feedback/ActionToast'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
-import { ArrowLeft, History, CheckSquare, FileText, FolderOpen, Settings, LayoutGrid, Search, BarChart3, Keyboard, Files } from 'lucide-react'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { SidebarView } from '@/components/layout/Sidebar'
+import { ArrowLeft, History, CheckSquare, FileText, FolderOpen, Settings, LayoutGrid, Search, BarChart3, Keyboard, Files, BookOpen } from 'lucide-react'
 import type { Project } from '@/features/projects'
 import type { Note } from '@/features/notes/types/note.types'
+
+// Research Features
+import { LiteratureReview, MindMap, ResearchSections, ResearchSection } from '@/features/research'
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -38,8 +43,7 @@ const queryClient = new QueryClient({
     },
 })
 
-type View = 'projects' | 'project-detail'
-type Tab = 'overview' | 'files' | 'history' | 'tasks' | 'kanban' | 'notes' | 'analytics'
+type Tab = 'overview' | 'files' | 'history' | 'tasks' | 'kanban' | 'notes' | 'research' | 'analytics'
 
 /**
  * Task Tab Content - Uses project tasks hook
@@ -79,14 +83,17 @@ function NotesTabContent({ projectId }: { projectId: string }) {
         isLoading,
         create,
         update,
-        updateContent,
         remove,
         togglePin,
-        duplicate,
     } = useProjectNotes(projectId)
 
     const handleCreateNote = () => {
-        create({ projectId, title: 'Untitled Note', content: '', isPinned: false })
+        create({
+            projectId,
+            title: 'Untitled Note',
+            content: '',
+            isPinned: false
+        })
     }
 
     const handleEditNote = (note: Note) => {
@@ -99,7 +106,7 @@ function NotesTabContent({ projectId }: { projectId: string }) {
 
     const handleContentChange = (content: string) => {
         if (selectedNote) {
-            updateContent(selectedNote.id, content)
+            update(selectedNote.id, { content })
         }
     }
 
@@ -112,20 +119,20 @@ function NotesTabContent({ projectId }: { projectId: string }) {
     // Show NoteEditor when a note is selected
     if (selectedNote) {
         return (
-            <div className="flex flex-col h-full">
-                <div className="flex items-center gap-2 p-3 border-b bg-muted/30">
+            <div className="h-full flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
                     <Button variant="ghost" size="sm" onClick={handleBackToList}>
                         <ArrowLeft className="h-4 w-4 mr-1" />
                         Back to Notes
                     </Button>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 border rounded-lg overflow-hidden bg-background">
                     <NoteEditor
                         content={selectedNote.content || ''}
                         title={selectedNote.title}
                         onContentChange={handleContentChange}
                         onTitleChange={handleTitleChange}
-                        autoSaveDelay={2000}
+                        readOnly={false}
                     />
                 </div>
             </div>
@@ -142,7 +149,6 @@ function NotesTabContent({ projectId }: { projectId: string }) {
             onEditNote={handleEditNote}
             onDelete={remove}
             onTogglePin={togglePin}
-            onDuplicate={duplicate}
         />
     )
 }
@@ -156,9 +162,7 @@ function KanbanTabContent({ projectId }: { projectId: string }) {
         create,
         update,
         remove,
-        isCreating,
-        isUpdating,
-        isDeleting
+        isUpdating
     } = useProjectTasks(projectId)
 
     return (
@@ -168,13 +172,63 @@ function KanbanTabContent({ projectId }: { projectId: string }) {
             onCreateTask={create}
             onUpdateTask={update}
             onDeleteTask={remove}
-            isLoading={isCreating || isUpdating || isDeleting}
+            isLoading={isUpdating}
+        />
+    )
+}
+
+/**
+ * Research Tab Content
+ */
+function ResearchTabContent({ projectId }: { projectId: string }) {
+    const [activeSection, setActiveSection] = useState<ResearchSection | null>(null)
+
+    if (activeSection === 'literature-review') {
+        return (
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setActiveSection(null)}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back to Research
+                    </Button>
+                </div>
+                <LiteratureReview projectId={projectId} />
+            </div>
+        )
+    }
+
+    if (activeSection === 'mind-map') {
+        return (
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setActiveSection(null)}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back to Research
+                    </Button>
+                </div>
+                <MindMap projectId={projectId} />
+            </div>
+        )
+    }
+
+    return (
+        <ResearchSections
+            projectId={projectId}
+            onSelectSection={setActiveSection}
+            sectionCounts={{
+                'literature-review': 0,
+                'mind-map': 0,
+                'methodology': 0,
+                'data-collection': 0,
+                'findings': 0,
+                'references': 0,
+            }}
         />
     )
 }
 
 function AppContent() {
-    const [view, setView] = useState<View>('projects')
+    const [sidebarView, setSidebarView] = useState<SidebarView>('projects')
     const [activeTab, setActiveTab] = useState<Tab>('overview')
     const [createDialogOpen, setCreateDialogOpen] = useState(false)
     const [settingsProject, setSettingsProject] = useState<Project | null>(null)
@@ -183,6 +237,21 @@ function AppContent() {
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
     const [helpOpen, setHelpOpen] = useState(false)
     const [selectedFile, setSelectedFile] = useState<string | null>(null)
+
+    // Sync sidebar selection with active view
+    useEffect(() => {
+        if (selectedProject) {
+            // When a project is selected, we are effectively in "project view" 
+            // but the sidebar might show 'projects' as active
+        } else {
+            // Check mapping between sidebar view and content
+            if (sidebarView === 'settings') {
+                setSettingsOpen(true)
+            } else if (sidebarView === 'help') {
+                setHelpOpen(true)
+            }
+        }
+    }, [sidebarView, selectedProject])
 
     // Tutorial state - show on first launch
     const [showTutorial, setShowTutorial] = useState(() => {
@@ -194,7 +263,7 @@ function AppContent() {
 
     // Start auto-commit watching when project opens
     useEffect(() => {
-        if (selectedProject && autoCommit && !autoCommit.isWatching) {
+        if (selectedProject && autoCommit) {
             autoCommit.start()
         }
         return () => {
@@ -206,13 +275,12 @@ function AppContent() {
 
     const handleOpenProject = (project: Project) => {
         setSelectedProject(project)
-        setView('project-detail')
         setActiveTab('overview')
     }
 
     const handleBackToProjects = () => {
         setSelectedProject(null)
-        setView('projects')
+        setSidebarView('projects')
     }
 
     const handleArchiveProject = (project: Project) => {
@@ -233,50 +301,197 @@ function AppContent() {
         console.log('Project created:', projectId)
     }
 
+    // Keyboard shortcuts
+    const handleCommandPalette = () => setCommandPaletteOpen(true)
+    const handleSettings = () => setSettingsOpen(true)
+    const handleHelp = () => setHelpOpen(true)
 
-
-    return (
-        <div className="min-h-screen bg-background text-foreground">
-            {view === 'projects' ? (
-                <div className="container mx-auto px-4 py-8 max-w-7xl">
-                    {/* Homepage Header with Settings */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold">Research Manager</h1>
-                            <p className="text-muted-foreground">Manage your research projects</p>
+    // Render logic based on view state
+    const renderMainContent = () => {
+        // 1. Project Detail View
+        if (selectedProject) {
+            return (
+                <div className="flex flex-col h-full overflow-hidden">
+                    {/* Project Header */}
+                    <div className="border-b bg-card px-6 py-4 flex flex-col gap-4 shrink-0">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleBackToProjects}
+                                    title="Back to Projects"
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                </Button>
+                                <div>
+                                    <div className="text-sm text-muted-foreground mb-1">
+                                        <Breadcrumb
+                                            items={[
+                                                { label: 'Projects', onClick: handleBackToProjects },
+                                                { label: selectedProject.name }
+                                            ]}
+                                        />
+                                    </div>
+                                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                                        {selectedProject.name}
+                                        {/* Status badge could go here */}
+                                    </h1>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleProjectSettings(selectedProject)}
+                                >
+                                    <Settings className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCommandPaletteOpen(true)}
-                                className="gap-2 text-muted-foreground"
-                                title="Search (Ctrl+K)"
-                            >
-                                <Search className="h-4 w-4" />
-                                <span className="hidden sm:inline">Search...</span>
-                                <kbd className="hidden sm:inline ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">⌘K</kbd>
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setHelpOpen(true)}
-                                title="Keyboard Shortcuts (?)"
-                            >
-                                <Keyboard className="h-5 w-5" />
-                            </Button>
-                            <ThemeSelector variant="toggle" />
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSettingsOpen(true)}
-                                title="Settings"
-                            >
-                                <Settings className="h-5 w-5" />
-                            </Button>
+
+                        {/* Project Tabs */}
+                        <div className="flex gap-1 overflow-x-auto pb-1">
+                            {[
+                                { id: 'overview', icon: LayoutGrid, label: 'Overview' },
+                                { id: 'research', icon: BookOpen, label: 'Research' },
+                                { id: 'files', icon: Files, label: 'Files' },
+                                { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
+                                { id: 'kanban', icon: LayoutGrid, label: 'Board' },
+                                { id: 'notes', icon: FileText, label: 'Notes' },
+                                { id: 'history', icon: History, label: 'History' },
+                                { id: 'analytics', icon: BarChart3, label: 'Analytics' },
+                            ].map(tab => {
+                                const Icon = tab.icon
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id as Tab)}
+                                        className={`
+                                            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap
+                                            ${activeTab === tab.id
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            }
+                                        `}
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                        {tab.label}
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
 
+                    {/* Content Area */}
+                    <div className="flex-1 overflow-y-auto p-6 bg-background">
+                        {activeTab === 'overview' && (
+                            <div className="max-w-4xl mx-auto space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Tasks</h3>
+                                        <div className="text-2xl font-bold">12</div>
+                                        <div className="text-xs text-muted-foreground mt-1">4 pending</div>
+                                    </div>
+                                    <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Documents</h3>
+                                        <div className="text-2xl font-bold">24</div>
+                                        <div className="text-xs text-muted-foreground mt-1">Last edited 2h ago</div>
+                                    </div>
+                                    <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Research Items</h3>
+                                        <div className="text-2xl font-bold">8</div>
+                                        <div className="text-xs text-muted-foreground mt-1">3 new papers</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-[400px]">
+                                    <div className="border rounded-lg p-6 bg-card h-full overflow-hidden flex flex-col">
+                                        <h3 className="font-semibold mb-4">Recent Activity</h3>
+                                        {/* Activity timeline placeholder */}
+                                        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                                            Activity Timeline
+                                        </div>
+                                    </div>
+                                    <div className="border rounded-lg p-6 bg-card h-full overflow-hidden flex flex-col">
+                                        <h3 className="font-semibold mb-4">Project Progress</h3>
+                                        <AnalyticsDashboard />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'research' && (
+                            <div className="h-full">
+                                <ResearchTabContent projectId={selectedProject.id} />
+                            </div>
+                        )}
+
+                        {activeTab === 'files' && (
+                            <div className="h-full border rounded-lg overflow-hidden bg-card">
+                                <FileTree
+                                    projectPath={selectedProject.path}
+                                    onFileSelect={setSelectedFile}
+                                />
+                            </div>
+                        )}
+
+                        {activeTab === 'history' && (
+                            <div className="h-full border rounded-lg overflow-hidden bg-card">
+                                <UndoTree
+                                    projectPath={selectedProject.path}
+                                />
+                            </div>
+                        )}
+
+                        {activeTab === 'tasks' && <TaskTabContent projectId={selectedProject.id} />}
+
+                        {activeTab === 'kanban' && <KanbanTabContent projectId={selectedProject.id} />}
+
+                        {activeTab === 'notes' && <NotesTabContent projectId={selectedProject.id} />}
+
+                        {activeTab === 'analytics' && (
+                            <AnalyticsDashboard />
+                        )}
+                    </div>
+                </div>
+            )
+        }
+
+        // 2. Global Views based on Sidebar selection
+        if (sidebarView === 'analytics') {
+            return (
+                <div className="p-6 h-full overflow-auto">
+                    <h1 className="text-2xl font-bold mb-6">Global Analytics</h1>
+                    <AnalyticsDashboard />
+                </div>
+            )
+        }
+
+        // 3. Default: Projects List View
+        return (
+            <div className="container mx-auto px-4 py-8 max-w-7xl h-full flex flex-col">
+                <div className="flex items-center justify-between mb-8 shrink-0">
+                    <div>
+                        <h1 className="text-3xl font-bold">Research Manager</h1>
+                        <p className="text-muted-foreground">Manage your research projects</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            onClick={handleCommandPalette}
+                            variant="outline"
+                            className="mr-2"
+                        >
+                            <Search className="h-4 w-4 mr-2" />
+                            Search... (Cmd+K)
+                        </Button>
+                        <Button onClick={() => setCreateDialogOpen(true)}>
+                            Create Project
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-hidden">
                     <ProjectList
                         onCreateProject={() => setCreateDialogOpen(true)}
                         onOpenProject={handleOpenProject}
@@ -285,252 +500,51 @@ function AppContent() {
                         onProjectSettings={handleProjectSettings}
                     />
                 </div>
-            ) : (
-                <div className="flex flex-col h-screen">
-                    {/* Project Header */}
-                    <header className="border-b bg-card px-6 py-4">
-                        <div className="flex items-center gap-4">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleBackToProjects}
-                                className="gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Back
-                            </Button>
+            </div>
+        )
+    }
 
-                            {/* Breadcrumb Navigation */}
-                            <Breadcrumb
-                                items={[
-                                    { label: 'Projects', onClick: handleBackToProjects },
-                                    { label: selectedProject?.name || 'Project' },
-                                ]}
-                                className="hidden sm:flex"
-                            />
+    return (
+        <AppLayout
+            currentView={sidebarView}
+            onViewChange={(view) => {
+                setSidebarView(view)
+                // Reset selected project if navigating away from project
+                if (view !== 'projects' && view !== 'home') {
+                    setSelectedProject(null)
+                }
+            }}
+        >
+            {renderMainContent()}
 
-                            <div className="flex items-center gap-3 flex-1">
-                                <FolderOpen className="h-6 w-6 text-primary" />
-                                <div>
-                                    <h1 className="text-xl font-semibold">{selectedProject?.name}</h1>
-                                    <p className="text-sm text-muted-foreground">{selectedProject?.path}</p>
-                                </div>
-                            </div>
-                            {/* Search, Settings & Theme */}
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCommandPaletteOpen(true)}
-                                    className="gap-2 text-muted-foreground"
-                                    title="Search (Ctrl+K)"
-                                >
-                                    <Search className="h-4 w-4" />
-                                    <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">⌘K</kbd>
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setHelpOpen(true)}
-                                    title="Keyboard Shortcuts (?)"
-                                >
-                                    <Keyboard className="h-5 w-5" />
-                                </Button>
-                                <ThemeSelector variant="toggle" />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setSettingsOpen(true)}
-                                    title="Settings"
-                                >
-                                    <Settings className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Tab Navigation */}
-                        <nav className="flex gap-1 mt-4">
-                            <Button
-                                variant={activeTab === 'overview' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('overview')}
-                                className="gap-2"
-                            >
-                                <FolderOpen className="h-4 w-4" />
-                                Overview
-                            </Button>
-                            <Button
-                                variant={activeTab === 'files' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('files')}
-                                className="gap-2"
-                            >
-                                <Files className="h-4 w-4" />
-                                Files
-                            </Button>
-                            <Button
-                                variant={activeTab === 'history' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('history')}
-                                className="gap-2"
-                            >
-                                <History className="h-4 w-4" />
-                                Version History
-                            </Button>
-                            <Button
-                                variant={activeTab === 'tasks' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('tasks')}
-                                className="gap-2"
-                            >
-                                <CheckSquare className="h-4 w-4" />
-                                Tasks
-                            </Button>
-                            <Button
-                                variant={activeTab === 'kanban' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('kanban')}
-                                className="gap-2"
-                            >
-                                <LayoutGrid className="h-4 w-4" />
-                                Kanban
-                            </Button>
-                            <Button
-                                variant={activeTab === 'notes' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('notes')}
-                                className="gap-2"
-                            >
-                                <FileText className="h-4 w-4" />
-                                Notes
-                            </Button>
-                            <Button
-                                variant={activeTab === 'analytics' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => setActiveTab('analytics')}
-                                className="gap-2"
-                            >
-                                <BarChart3 className="h-4 w-4" />
-                                Analytics
-                            </Button>
-                        </nav>
-                    </header>
-
-                    {/* Tab Content */}
-                    <main className="flex-1 overflow-auto p-6">
-                        {activeTab === 'overview' && (
-                            <div className="max-w-4xl mx-auto space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="p-6 rounded-xl border bg-card">
-                                        <div className="text-3xl font-bold text-primary">0</div>
-                                        <div className="text-sm text-muted-foreground">Tasks</div>
-                                    </div>
-                                    <div className="p-6 rounded-xl border bg-card">
-                                        <div className="text-3xl font-bold text-green-500">0</div>
-                                        <div className="text-sm text-muted-foreground">Notes</div>
-                                    </div>
-                                    <div className="p-6 rounded-xl border bg-card">
-                                        <div className="text-3xl font-bold text-blue-500">3</div>
-                                        <div className="text-sm text-muted-foreground">Snapshots</div>
-                                    </div>
-                                </div>
-
-                                {selectedProject?.description && (
-                                    <div className="p-6 rounded-xl border bg-card">
-                                        <h2 className="font-semibold mb-2">Description</h2>
-                                        <p className="text-muted-foreground">{selectedProject.description}</p>
-                                    </div>
-                                )}
-
-                                <div className="p-6 rounded-xl border bg-card">
-                                    <h2 className="font-semibold mb-4">Quick Actions</h2>
-                                    <div className="flex gap-2">
-                                        <Button onClick={() => setActiveTab('tasks')}>Create Task</Button>
-                                        <Button variant="outline" onClick={() => setActiveTab('notes')}>Add Note</Button>
-                                        <Button variant="outline" onClick={() => setActiveTab('history')}>View History</Button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'files' && selectedProject && (
-                            <div className="h-full max-w-md">
-                                <FileTree
-                                    projectPath={selectedProject.path}
-                                    selectedFile={selectedFile}
-                                    onFileSelect={setSelectedFile}
-                                    className="border rounded-lg bg-card"
-                                />
-                            </div>
-                        )}
-
-                        {activeTab === 'history' && selectedProject && (
-                            <div className="h-full">
-                                <UndoTree
-                                    projectPath={selectedProject.path}
-                                    onSelect={(snapshotId: string) => console.log('Selected snapshot:', snapshotId)}
-                                    onRestore={(snapshotId: string) => console.log('Restore to snapshot:', snapshotId)}
-                                />
-                            </div>
-                        )}
-
-                        {activeTab === 'tasks' && selectedProject && (
-                            <TaskTabContent projectId={selectedProject.id} />
-                        )}
-
-                        {activeTab === 'kanban' && selectedProject && (
-                            <KanbanTabContent projectId={selectedProject.id} />
-                        )}
-
-                        {activeTab === 'notes' && selectedProject && (
-                            <NotesTabContent projectId={selectedProject.id} />
-                        )}
-
-                        {activeTab === 'analytics' && (
-                            <AnalyticsDashboard />
-                        )}
-                    </main>
-                </div>
-            )}
-
+            {/* Dialogs & Overlays */}
             <CreateProjectDialog
                 open={createDialogOpen}
                 onOpenChange={setCreateDialogOpen}
                 onSuccess={handleProjectCreated}
             />
 
-            <ProjectSettings
-                project={settingsProject}
-                open={!!settingsProject}
-                onOpenChange={(open) => {
-                    if (!open) setSettingsProject(null)
-                }}
-            />
+            {settingsProject && (
+                <ProjectSettings
+                    project={settingsProject}
+                    open={!!settingsProject}
+                    onOpenChange={(open) => !open && setSettingsProject(null)}
+                />
+            )}
 
             <SettingsPanel
                 open={settingsOpen}
                 onOpenChange={setSettingsOpen}
             />
 
+            <ThemeSelector />
+
             <CommandPalette
                 open={commandPaletteOpen}
                 onOpenChange={setCommandPaletteOpen}
-                onSelectProject={(id) => {
-                    // TODO: Implement project selection from search
-                    console.log('Selected project:', id)
-                }}
+                onSelectProject={(id) => console.log('Selected project:', id)}
                 onSelectNote={(id) => {
                     console.log('Selected note:', id)
-                }}
-                onSelectTask={(id) => {
-                    console.log('Selected task:', id)
-                }}
-                onCreateProject={() => setCreateDialogOpen(true)}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onNavigate={(tab) => setActiveTab(tab as Tab)}
-                onGoHome={() => {
-                    setSelectedProject(null)
-                    setView('projects')
                 }}
             />
 
@@ -562,7 +576,9 @@ function AppContent() {
                     storageKey="research-tutorial-completed"
                 />
             )}
-        </div>
+
+            <ToastContainer />
+        </AppLayout>
     )
 }
 
@@ -570,7 +586,6 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <AppContent />
-            <ToastContainer />
         </QueryClientProvider>
     )
 }

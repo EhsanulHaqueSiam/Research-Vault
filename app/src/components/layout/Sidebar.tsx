@@ -1,128 +1,209 @@
 /**
- * Sidebar Component
+ * App Sidebar
  * 
- * Navigation sidebar with collapsible sections
+ * Main navigation sidebar with collapsible sections
  */
 
 import { useState } from 'react'
 import {
     Home,
     FolderOpen,
-    CheckSquare,
-    FileText,
-    BarChart3,
+    Clock,
+    Star,
     Settings,
-    PanelLeftClose,
-    PanelLeft,
+    ChevronLeft,
+    ChevronRight,
+    Moon,
+    Sun,
+    Monitor,
+    BookOpen,
+    BarChart3,
+    HelpCircle,
+    Archive,
 } from 'lucide-react'
 import { cn } from '@/shared/utils/cn'
+import { Button, Badge } from '@/components/ui'
 
-interface SidebarProps {
-    collapsed?: boolean
-    onToggleCollapse?: () => void
-    activeItem?: string
-    onNavigate?: (item: string) => void
+export type SidebarView =
+    | 'home'
+    | 'projects'
+    | 'recent'
+    | 'favorites'
+    | 'archived'
+    | 'analytics'
+    | 'help'
+    | 'settings'
+
+export interface SidebarProps {
+    currentView: SidebarView
+    onViewChange: (view: SidebarView) => void
+    projectCount?: number
+    recentCount?: number
+    favoritesCount?: number
+    onThemeChange?: (theme: 'light' | 'dark' | 'system') => void
+    currentTheme?: 'light' | 'dark' | 'system'
+    className?: string
 }
 
 interface NavItem {
-    id: string
+    id: SidebarView
     label: string
-    icon: React.ComponentType<{ className?: string }>
+    icon: typeof Home
+    badge?: number
 }
 
-const navItems: NavItem[] = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'projects', label: 'Projects', icon: FolderOpen },
-    { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-    { id: 'notes', label: 'Notes', icon: FileText },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-]
-
 export function Sidebar({
-    collapsed = false,
-    onToggleCollapse,
-    activeItem = 'home',
-    onNavigate,
+    currentView,
+    onViewChange,
+    projectCount = 0,
+    recentCount = 0,
+    favoritesCount = 0,
+    onThemeChange,
+    currentTheme = 'system',
+    className,
 }: SidebarProps) {
-    // Hover-expand for mini mode
-    const [isHovered, setIsHovered] = useState(false)
-    const showExpanded = !collapsed || isHovered
+    const [isCollapsed, setIsCollapsed] = useState(false)
+
+    const mainNav: NavItem[] = [
+        { id: 'home', label: 'Home', icon: Home },
+        { id: 'projects', label: 'All Projects', icon: FolderOpen, badge: projectCount },
+        { id: 'recent', label: 'Recent', icon: Clock, badge: recentCount },
+        { id: 'favorites', label: 'Favorites', icon: Star, badge: favoritesCount },
+        { id: 'archived', label: 'Archived', icon: Archive },
+    ]
+
+    const secondaryNav: NavItem[] = [
+        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'help', label: 'Help & Tutorial', icon: HelpCircle },
+        { id: 'settings', label: 'Settings', icon: Settings },
+    ]
+
+    const themeIcons = {
+        light: Sun,
+        dark: Moon,
+        system: Monitor,
+    }
+
+    const ThemeIcon = themeIcons[currentTheme]
+
+    const cycleTheme = () => {
+        const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system']
+        const currentIndex = themes.indexOf(currentTheme)
+        const nextTheme = themes[(currentIndex + 1) % themes.length]
+        onThemeChange?.(nextTheme)
+    }
 
     return (
-        <div
+        <aside
             className={cn(
-                'flex flex-col h-full transition-all duration-300 ease-out',
-                collapsed && !isHovered ? 'w-16' : 'w-56'
+                'h-screen flex flex-col bg-card border-r transition-all duration-200',
+                isCollapsed ? 'w-16' : 'w-56',
+                className
             )}
-            onMouseEnter={() => collapsed && setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-                {showExpanded && (
-                    <h1 className="font-bold text-lg transition-opacity duration-200">
-                        Research
-                    </h1>
+            <div className="h-14 flex items-center justify-between px-4 border-b">
+                {!isCollapsed && (
+                    <div className="flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                        <span className="font-semibold text-sm">Research Vault</span>
+                    </div>
                 )}
-                <button
-                    onClick={onToggleCollapse}
-                    className="p-2 rounded-lg hover:bg-muted transition-colors"
-                    title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 ml-auto"
+                    onClick={() => setIsCollapsed(!isCollapsed)}
                 >
-                    {collapsed ? (
-                        <PanelLeft className="h-4 w-4" />
+                    {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4" />
                     ) : (
-                        <PanelLeftClose className="h-4 w-4" />
+                        <ChevronLeft className="h-4 w-4" />
                     )}
-                </button>
+                </Button>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 p-2 space-y-1">
-                {navItems.map((item) => {
+            {/* Main Navigation */}
+            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+                {mainNav.map(item => {
                     const Icon = item.icon
-                    const isActive = activeItem === item.id
+                    const isActive = currentView === item.id
 
                     return (
                         <button
                             key={item.id}
-                            onClick={() => onNavigate?.(item.id)}
+                            onClick={() => onViewChange(item.id)}
                             className={cn(
-                                'w-full flex items-center gap-3 px-3 py-2 rounded-lg',
-                                'text-sm font-medium transition-all duration-200',
-                                'hover:scale-[1.02]',
+                                'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                                 isActive
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
-                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                isCollapsed && 'justify-center px-0'
                             )}
-                            title={!showExpanded ? item.label : undefined}
+                            title={isCollapsed ? item.label : undefined}
                         >
-                            <Icon className="h-5 w-5 flex-shrink-0" />
-                            {showExpanded && (
-                                <span className="transition-opacity duration-200">
-                                    {item.label}
-                                </span>
+                            <Icon className="h-4 w-4 shrink-0" />
+                            {!isCollapsed && (
+                                <>
+                                    <span className="flex-1 text-left">{item.label}</span>
+                                    {item.badge !== undefined && item.badge > 0 && (
+                                        <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                                            {item.badge}
+                                        </Badge>
+                                    )}
+                                </>
+                            )}
+                        </button>
+                    )
+                })}
+
+                {/* Divider */}
+                <div className="h-px bg-border my-3" />
+
+                {secondaryNav.map(item => {
+                    const Icon = item.icon
+                    const isActive = currentView === item.id
+
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => onViewChange(item.id)}
+                            className={cn(
+                                'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                                isActive
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                isCollapsed && 'justify-center px-0'
+                            )}
+                            title={isCollapsed ? item.label : undefined}
+                        >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            {!isCollapsed && (
+                                <span className="flex-1 text-left">{item.label}</span>
                             )}
                         </button>
                     )
                 })}
             </nav>
 
-            {/* Footer */}
+            {/* Footer - Theme Toggle */}
             <div className="p-2 border-t">
                 <button
-                    onClick={() => onNavigate?.('settings')}
+                    onClick={cycleTheme}
                     className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
-                        'text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted'
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                        'text-muted-foreground hover:bg-muted hover:text-foreground',
+                        isCollapsed && 'justify-center px-0'
                     )}
-                    title={!showExpanded ? 'Settings' : undefined}
+                    title={isCollapsed ? `Theme: ${currentTheme}` : undefined}
                 >
-                    <Settings className="h-5 w-5 flex-shrink-0" />
-                    {showExpanded && <span>Settings</span>}
+                    <ThemeIcon className="h-4 w-4 shrink-0" />
+                    {!isCollapsed && (
+                        <span className="flex-1 text-left capitalize">{currentTheme} mode</span>
+                    )}
                 </button>
             </div>
-        </div>
+        </aside>
     )
 }
 
