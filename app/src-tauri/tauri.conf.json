@@ -1,0 +1,84 @@
+{
+    "$schema": "https://schema.tauri.app/config/2",
+    "productName": "Research Management",
+    "version": "0.1.0",
+    "identifier": "com.research.management",
+    "build": {
+        "beforeDevCommand": "pnpm dev",
+        "devUrl": "http://localhost:1420",
+        "beforeBuildCommand": "pnpm build",
+        "frontendDist": "../dist"
+    },
+    "app": {
+        "withGlobalTauri": true,
+        "windows": [
+            {
+                "title": "Research Management",
+                "width": 1200,
+                "height": 800,
+                "minWidth": 800,
+                "minHeight": 600,
+                "resizable": true,
+                "fullscreen": false,
+                "center": true
+            }
+        ],
+        "security": {
+            "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com"
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
+        "category": "Productivity",
+        "shortDescription": "Research project management with Git versioning",
+        "longDescription": "A powerful desktop application for managing research projects, tasks, and notes with automatic Git version control and visual undo tree.",
+        "copyright": "© 2024 Research Management",
+        "publisher": "Research Management Team",
+        "windows": {
+            "certificateThumbprint": null,
+            "timestampUrl": "http://timestamp.digicert.com",
+            "wix": null
+        },
+        "macOS": {
+            "entitlements": null,
+            "exceptionDomain": null,
+            "frameworks": [],
+            "providerShortName": null,
+            "signingIdentity": null
+        },
+        "linux": {
+            "appimage": {
+                "bundleMediaFramework": false
+            },
+            "deb": {
+                "depends": []
+            },
+            "rpm": {
+                "release": "1"
+            }
+        }
+    },
+    "plugins": {
+        "sql": {
+            "preload": [
+                "sqlite:research.db"
+            ]
+        },
+        "updater": {
+            "active": true,
+            "dialog": true,
+            "pubkey": "YOUR_PUBLIC_KEY_HERE",
+            "endpoints": [
+                "https://github.com/YOUR_USERNAME/research-management/releases/latest/download/latest.json"
+            ]
+        }
+    }
+}
