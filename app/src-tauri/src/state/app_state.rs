@@ -139,7 +139,7 @@ impl AppState {
     }
 
     /// Get database connection
-    pub fn get_db(&self) -> std::sync::MutexGuard<Option<Connection>> {
+    pub fn get_db(&self) -> std::sync::MutexGuard<'_, Option<Connection>> {
         self.db.lock().unwrap()
     }
 }

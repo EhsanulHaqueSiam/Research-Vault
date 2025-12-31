@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection, Row};
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::models::{Project, Task, Note};
 
 /// Database service for SQLite operations
@@ -70,7 +70,7 @@ impl DbService {
         
         // Build dynamic update query
         let mut updates = vec!["last_modified_at = ?1"];
-        let mut params_idx = 2;
+        let _params_idx = 2;
         
         if name.is_some() { updates.push("name = ?2"); }
         if description.is_some() { updates.push("description = ?3"); }

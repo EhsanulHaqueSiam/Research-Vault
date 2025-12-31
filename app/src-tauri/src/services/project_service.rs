@@ -65,7 +65,7 @@ impl ProjectService {
     }
 
     /// Update project
-    pub async fn update_project(id: String, data: UpdateProjectDto) -> AppResult<Project> {
+    pub async fn update_project(id: String, _data: UpdateProjectDto) -> AppResult<Project> {
         // TODO: Update in database
         Err(AppError::NotFound("Project", id))
     }

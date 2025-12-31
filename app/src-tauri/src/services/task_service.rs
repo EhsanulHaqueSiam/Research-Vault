@@ -90,7 +90,7 @@ impl TaskService {
     }
 
     /// Update task
-    pub async fn update_task(id: String, data: UpdateTaskDto) -> AppResult<Task> {
+    pub async fn update_task(id: String, _data: UpdateTaskDto) -> AppResult<Task> {
         if id.is_empty() {
             return Err(AppError::InvalidInput("Task ID cannot be empty".into()));
         }
@@ -110,7 +110,7 @@ impl TaskService {
     }
 
     /// Move task to a different parent
-    pub async fn move_task(id: String, new_parent_id: Option<String>) -> AppResult<Task> {
+    pub async fn move_task(id: String, _new_parent_id: Option<String>) -> AppResult<Task> {
         if id.is_empty() {
             return Err(AppError::InvalidInput("Task ID cannot be empty".into()));
         }
@@ -120,7 +120,7 @@ impl TaskService {
     }
 
     /// Reorder task
-    pub async fn reorder_task(id: String, new_order: i32) -> AppResult<Task> {
+    pub async fn reorder_task(id: String, _new_order: i32) -> AppResult<Task> {
         if id.is_empty() {
             return Err(AppError::InvalidInput("Task ID cannot be empty".into()));
         }
@@ -148,7 +148,7 @@ impl TaskService {
     }
 
     /// Search tasks
-    pub async fn search_tasks(project_id: String, query: String) -> AppResult<Vec<Task>> {
+    pub async fn search_tasks(project_id: String, _query: String) -> AppResult<Vec<Task>> {
         if project_id.is_empty() {
             return Err(AppError::InvalidInput("Project ID cannot be empty".into()));
         }

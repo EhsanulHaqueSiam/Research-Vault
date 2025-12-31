@@ -1,4 +1,4 @@
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::models::{CreateProjectDto, Project, UpdateProjectDto};
 use crate::services::ProjectService;
 

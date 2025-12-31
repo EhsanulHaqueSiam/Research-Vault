@@ -79,7 +79,7 @@ impl NoteService {
     }
 
     /// Update note
-    pub async fn update_note(id: String, data: UpdateNoteDto) -> AppResult<Note> {
+    pub async fn update_note(id: String, _data: UpdateNoteDto) -> AppResult<Note> {
         if id.is_empty() {
             return Err(AppError::InvalidInput("Note ID cannot be empty".into()));
         }
@@ -109,7 +109,7 @@ impl NoteService {
     }
 
     /// Duplicate note
-    pub async fn duplicate_note(id: String, new_title: Option<String>) -> AppResult<Note> {
+    pub async fn duplicate_note(id: String, _new_title: Option<String>) -> AppResult<Note> {
         if id.is_empty() {
             return Err(AppError::InvalidInput("Note ID cannot be empty".into()));
         }
@@ -119,7 +119,7 @@ impl NoteService {
     }
 
     /// Search notes
-    pub async fn search_notes(project_id: String, query: String) -> AppResult<Vec<Note>> {
+    pub async fn search_notes(project_id: String, _query: String) -> AppResult<Vec<Note>> {
         if project_id.is_empty() {
             return Err(AppError::InvalidInput("Project ID cannot be empty".into()));
         }
