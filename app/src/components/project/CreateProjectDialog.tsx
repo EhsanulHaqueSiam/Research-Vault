@@ -4,7 +4,7 @@
  * Multi-step wizard for creating new projects
  */
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
     FolderOpen,
     ChevronRight,
@@ -16,6 +16,7 @@ import {
     BookOpen,
     Briefcase,
     FlaskConical,
+    Folder,
 } from 'lucide-react'
 import {
     Dialog,
@@ -31,6 +32,24 @@ import {
 } from '@/components/ui'
 import { useCreateProjectFromTemplate, useProjectTemplates } from '@/features/projects/hooks'
 import type { ProjectTemplate } from '@/features/projects'
+
+// Tauri dialog API
+const openFolderPicker = async (): Promise<string | null> => {
+    try {
+        // Dynamic import for Tauri API (works on desktop, gracefully fails on web)
+        const { open } = await import('@tauri-apps/plugin-dialog')
+        const selected = await open({
+            directory: true,
+            multiple: false,
+            title: 'Select Project Location',
+        })
+        return selected as string | null
+    } catch {
+        // Fallback for web/development mode
+        console.warn('Tauri dialog not available, using fallback')
+        return null
+    }
+}
 
 interface CreateProjectDialogProps {
     open: boolean
@@ -73,6 +92,18 @@ export function CreateProjectDialog({
         setTags([])
         setTagInput('')
     }
+
+    // Handle folder picker
+    const handleBrowse = useCallback(async () => {
+        const selected = await openFolderPicker()
+        if (selected) {
+            // Append project name to create a new folder
+            const path = projectName
+                ? `${selected}/${projectName.replace(/[^a-zA-Z0-9-_ ]/g, '')}`
+                : selected
+            setProjectPath(path)
+        }
+    }, [projectName])
 
     const handleClose = () => {
         resetForm()
@@ -169,8 +200,8 @@ export function CreateProjectDialog({
                                     <button
                                         key={template.id}
                                         className={`p-4 rounded-lg border text-left transition-all hover:border-primary/50 hover:shadow-sm ${selectedTemplate?.id === template.id
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-border'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border'
                                             }`}
                                         onClick={() => handleSelectTemplate(template)}
                                     >
@@ -209,14 +240,26 @@ export function CreateProjectDialog({
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Project Path *</label>
-                                <Input
-                                    placeholder="/path/to/project"
-                                    value={projectPath}
-                                    onChange={(e) => setProjectPath(e.target.value)}
-                                />
+                                <label className="text-sm font-medium">Project Location *</label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="C:/Documents/Research or ~/Projects"
+                                        value={projectPath}
+                                        onChange={(e) => setProjectPath(e.target.value)}
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleBrowse}
+                                        className="gap-2 shrink-0"
+                                    >
+                                        <Folder className="h-4 w-4" />
+                                        Browse
+                                    </Button>
+                                </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Where the project folder will be created
+                                    Click Browse to select a folder, or type the path directly
                                 </p>
                             </div>
 
